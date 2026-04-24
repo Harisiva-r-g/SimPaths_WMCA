@@ -2,10 +2,9 @@
 package simpaths.experiment;
 
 // import Java packages
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 
 import simpaths.data.filters.FlexibleInLabourSupplyFilter;
 import simpaths.data.statistics.EmploymentStatistics;
@@ -135,6 +134,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     protected MultiTraceFunction.Double fGiniEquivalisedHouseholdDisposableIncomeNational;
 
     protected Map<Region, MultiTraceFunction.Double> fGiniEquivalisedHouseholdDisposableIncomeRegionalMap;
+
+//    Map<Integer, List<Long>> skillsInterventionLog_map = simulation.getYearlySkillsInterventionLog();
 
 
 
@@ -886,6 +887,24 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     public void setPersistHealthStatistics(boolean persistHealthStatistics) {
         this.persistHealthStatistics = persistHealthStatistics;
+    }
+
+    public void exportYearlySkillsIntervention(Map<Integer, List<Long>> data, int year) {
+
+        try (FileWriter writer = new FileWriter("yearly_skills_" + year + ".csv")) {
+
+            writer.append("Year,PersonId\n"); // header
+
+            for (Map.Entry<Integer, List<Long>> entry : data.entrySet()) {
+                Integer year = entry.getKey();
+                for (Long personId : entry.getValue()) {
+                    writer.append(year + "," + personId + "\n");
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

@@ -174,6 +174,8 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     private boolean alignEducation = false; //Set to true to align level of education
 
+    private boolean skillsIntervention = true;
+
     private boolean alignInSchool = false; //Set to true to align share of students among 16-29 age group
     private static final int IN_SCHOOL_ALIGNMENT_END_YEAR = 2023;
     private Double lastInSchoolAdjustment = null;
@@ -245,6 +247,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     public int nothing = 0;
 
     Map<String, Double> policyNameIncomeMedianMap = new LinkedHashMap<>(); // Initialise a <String, Double> map to store names of policies and median incomes
+    public Map<Integer, List<Long>> yearlySkillsInterventionLog = new HashMap<>();
 
     private Tests tests;
 
@@ -324,8 +327,10 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     Random initialiseInnov2;
     Random popAlignInnov;
     Random educationInnov;
+    Random randSkillsIntervention;
 
-//    private static String RunDatabasePath = RunDatabasePath;
+
+    //    private static String RunDatabasePath = RunDatabasePath;
     private static String RunDatabasePath;
     private static String PersistDatabasePath;
     private static boolean PersistPopulation = false;
@@ -374,6 +379,12 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         initialiseInnov2 = new Random(SimulationEngine.getRnd().nextLong());
         educationInnov = new Random(SimulationEngine.getRnd().nextLong());
         popAlignInnov = new Random(SimulationEngine.getRnd().nextLong());
+//        randSkillsIntervention = new Random(SimulationEngine.getRnd().nextLong());
+        long SkillsIntervention_seed = SimulationEngine.getRnd().nextLong();
+        randSkillsIntervention = new Random(SkillsIntervention_seed);
+        System.out.println("randSkillsIntervention seed = " + SkillsIntervention_seed);
+
+
 
         // load model parameters
         Parameters.loadParameters(country, maxAge, enableIntertemporalOptimisations, projectFormalChildcare,
@@ -522,6 +533,9 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         // In School alignment
         yearlySchedule.addEvent(this, Processes.InSchoolAlignment);
         yearlySchedule.addCollectionEvent(persons, Person.Processes.LeavingSchool);
+
+        //Adding skills intervention
+        addEventToAllYears(Processes.ApplyYearlySkillsIntervention);
 
         // Align the level of education if required
         addEventToAllYears(Processes.EducationLevelAlignment);
@@ -801,6 +815,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         PopulationAlignment,
         CohabitationAlignment,
         // HealthAlignment,
+        ApplyYearlySkillsIntervention,      //Skills Expt - Yearly Intervention
         InSchoolAlignment,
         EducationLevelAlignment,
 
@@ -898,6 +913,14 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                     System.out.println("Education levels will be aligned.");
                 }
             }
+            case ApplyYearlySkillsIntervention -> {
+                if (skillsIntervention){
+                    applyYearlySkillsIntervention();
+                    System.out.println("Yearly intervention for skills experiment");
+
+                }
+            }
+
             case LabourMarketAndIncomeUpdate -> {
 
                 labourMarket.update(year);
@@ -2154,6 +2177,48 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                     targetNumberToBePartnered);
         }
     }
+    /**
+     * PROCESS - Pick certain no of individuals and improve their education level from 'low' to 'medium' - in the SIMULATED POPULATION
+     */
+    private void applyYearlySkillsIntervention() {
+        if (!skillsIntervention) {
+            return;
+        }
+        int year = getYear();
+        List<Person> youngNEETedu_low = new ArrayList<>();
+
+        for (Person p : persons) {
+            // Age filter & Employment filter
+            if ((p.getDemAge() >= 16 &&
+                    p.getDemAge() <= 24) &&    //Age 16 to 24
+//                    (p.getDeh_c4() != Education.InEducation) &&   //Not in education
+                    (p.getLes_c4() == Les_c4.NotEmployed) &&    //Not employed
+                    (p.getDeh_c4() == Education.Low))    //With Low level of education
+            {
+                youngNEETedu_low.add(p);
+            }
+        }
+
+        int interventionCount = Math.min(1000, youngNEETedu_low.size()); // For now the intervention pool is set as 1000 or the whole eligible list if it has less than 1000 people.
+
+        Collections.shuffle(youngNEETedu_low, randSkillsIntervention);
+
+
+        for (int i = 0; i < interventionCount; i++) {
+            Person p = youngNEETedu_low.get(i);
+
+            // Upgrade education
+            p.setDeh_c4(Education.Medium);
+
+            // Log PersonID for analysis later
+            yearlySkillsInterventionLog
+                    .computeIfAbsent(year, y -> new ArrayList<>())
+                    .add(p.getIdOriginalPerson());
+
+        }
+        getCollector().exportYearlySkillsIntervention(getYearlySkillsInterventionLog(), getYear());
+    }
+
 
 
     /**
@@ -2943,6 +3008,8 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         return year;
     }
 
+
+
 //	public Integer getMinRetireAgeMales() {
 //		return minRetireAgeMales;
 //	}
@@ -2990,6 +3057,10 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 //			return maxRetireAgeMales;
 //		}
 //	}
+    public Map<Integer, List<Long>> getYearlySkillsInterventionLog() {
+        return yearlySkillsInterventionLog;
+    }
+
 
     public void setStartYear(Integer startYear) {
         this.startYear = startYear;
