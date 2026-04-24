@@ -896,9 +896,9 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             writer.append("Year,PersonId\n"); // header
 
             for (Map.Entry<Integer, List<Long>> entry : data.entrySet()) {
-                Integer year = entry.getKey();
+                Integer yearss = entry.getKey();
                 for (Long personId : entry.getValue()) {
-                    writer.append(year + "," + personId + "\n");
+                    writer.append(yearss + "," + personId + "\n");
                 }
             }
 
