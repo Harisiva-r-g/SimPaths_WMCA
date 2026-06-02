@@ -17,7 +17,10 @@ import org.junit.jupiter.api.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class RunSimPathsIntegrationTest {
-    private static final double NUMERIC_RELATIVE_TOLERANCE = 0.01;
+    /** Absolute epsilon for numeric comparison. */
+    private static final double ABS_EPSILON = 1e-9;
+    /** Relative epsilon for numeric comparison. */
+    private static final double REL_EPSILON = 1e-6;
 
     @Test
     @DisplayName("Initial database setup runs successfully")
@@ -187,7 +190,20 @@ public class RunSimPathsIntegrationTest {
         Double actualNumber = tryParseDouble(actualTrimmed);
 
         if (expectedNumber != null && actualNumber != null) {
-            return numbersMatchWithTolerance(expectedNumber, actualNumber);
+            double e = expectedNumber;
+            double a = actualNumber;
+            if (Double.isNaN(e) && Double.isNaN(a)) {
+                return true;
+            }
+            if (Double.isNaN(e) || Double.isNaN(a)) {
+                return false;
+            }
+            if (Double.isInfinite(e) || Double.isInfinite(a)) {
+                return Double.compare(e, a) == 0;
+            }
+            double diff = Math.abs(e - a);
+            double tolerance = Math.max(ABS_EPSILON, REL_EPSILON * Math.max(Math.abs(e), Math.abs(a)));
+            return diff <= tolerance;
         }
 
         return expectedToken.equals(actualToken);
@@ -199,17 +215,6 @@ public class RunSimPathsIntegrationTest {
         } catch (NumberFormatException e) {
             return null;
         }
-    }
-
-    private boolean numbersMatchWithTolerance(double expectedNumber, double actualNumber) {
-        if (!Double.isFinite(expectedNumber) || !Double.isFinite(actualNumber)) {
-            return Double.compare(expectedNumber, actualNumber) == 0;
-        }
-
-        double absoluteDifference = Math.abs(expectedNumber - actualNumber);
-        double relativeDifferenceLimit = NUMERIC_RELATIVE_TOLERANCE * Math.max(Math.abs(expectedNumber), Math.abs(actualNumber));
-
-        return absoluteDifference <= relativeDifferenceLimit;
     }
 
     private void runCommand(String... args) {
