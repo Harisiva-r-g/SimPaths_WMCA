@@ -33,9 +33,9 @@ public class SimPathsMultiRun extends MultiRun {
 
 	// command line args
 	private static String countryString;
-	private static Integer popSize = 25000;
+	private static Integer popSize = 100000;
 	private static int startYear;
-	private static int endYear = 2020;
+	private static int endYear = 2035;
 	private static int maxNumberOfRuns = 25;
 	private static Long randomSeed = 615L;
 	public static boolean executeWithGui = true;

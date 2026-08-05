@@ -2,6 +2,7 @@
 package simpaths.experiment;
 
 // import Java packages
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -883,20 +884,35 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         this.persistHealthStatistics = persistHealthStatistics;
     }
 
-    public void exportYearlySkillsIntervention(Map<Integer, List<Long>> data, int year) {
+    public void exportYearlySkillsIntervention(List<Person> data, int year) {
 
-        try (FileWriter writer = new FileWriter("yearly_skills_" + year + ".csv")) {
+        String out_dir = SimulationEngine.getInstance().getCurrentExperiment().getOutputFolder();
+        String[] tstamp = out_dir.replace("\\", "/").split("/");
+        File file = new File("yearly_skills_intervention_log_" + tstamp[tstamp.length-1] + ".csv");
+        try (FileWriter writer = new FileWriter(file, true)) {
 
-            writer.append("Year,PersonId\n"); // header
-
-            for (Map.Entry<Integer, List<Long>> entry : data.entrySet()) {
-                Integer yearss = entry.getKey();
-                for (Long personId : entry.getValue()) {
-                    writer.append(yearss + "," + personId + "\n");
-                }
+            if (file.length() == 0) {
+                writer.append("Year,OriginalId,PersonId,Age,Education,Employment,Region,Disability,LowWageOffer,LifeSat,PhysicalHealth,MentalHealth,Gender\n"); // header
             }
 
-        } catch (IOException e) {
+            for (Person p: data) {
+                writer.append(year + "," +
+                       p.getIdPersOriginal() + "," +
+                       p.getId() + "," +
+                       p.getDemAge() + "," +
+//                       p.getEducation() + "," +
+                       p.getEduHighestC4() + "," +
+                       p.getLabC4() + "," +
+                       p.getRegion() + "," +
+                       p.getDisability() + "," +
+                       p.getAtRiskOfPoverty() + "," +
+                       p.getDemLifeSatScore0to10() + "," +
+                       p.getHealthSelfRated() + "," +
+                       p.getHealthMentalMcs() + "," +
+                       p.getDemEthnC6() + "\n");
+                }
+            }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }

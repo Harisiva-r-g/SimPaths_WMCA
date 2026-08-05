@@ -4,12 +4,12 @@
 
 # ── Top-level run arguments ────────────────────────────────────────────────────
 
-maxNumberOfRuns: 1        # number of sequential simulation runs
+maxNumberOfRuns: 5        # number of sequential simulation runs
 executeWithGui: false     # true = launch JAS-mine GUI; false = headless (required on servers/CI)
 randomSeed: 606           # seed for the first run; incremented automatically if randomSeedInnov is true
-startYear: 2018           # first year of simulation (must have matching input/donor data)
-endYear: 2024             # last year of simulation (inclusive)
-popSize: 50000            # simulated population size (larger = more accurate, slower)
+startYear: 2023           # first year of simulation (must have matching input/donor data)
+endYear: 2035            # last year of simulation (inclusive)
+popSize: 100000            # simulated population size (larger = more accurate, slower)
 # countryString: "United Kingdom"   # Auto-detected from donor DB if omitted
 # integrationTest: false            # true = write output to a fixed folder for comparison in CI tests
 
@@ -61,6 +61,7 @@ model_args:
 #    alignInSchool: false         # align school participation rate (age 16–29) to targets
 #    alignCohabitation: false     # align share of cohabiting individuals to targets
 #    alignEmployment: false       # align employment share to targets
+#    skillsIntervention: true
 
   # --- Labour market modules ---
 #    labourMarketCovid19On: false  # enable reduced-form month-by-month COVID-19 labour market module
